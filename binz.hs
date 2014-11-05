@@ -5,7 +5,7 @@ instance Num Cpx where
   (+) (Cpx (a, b)) (Cpx (c, d)) = Cpx (a+c, b+d)
   (-) (Cpx (a, b)) (Cpx (c, d)) = Cpx (a-c, b-d)
   negate (Cpx (a, b)) = Cpx (-a, -b)
-  abs _ = 0
+  abs _ = Cpx (0, 0)
   signum _ = 0
   fromInteger a = Cpx (fromInteger a, 0)
 
@@ -22,12 +22,9 @@ instance Num BinZ where
   (+) (BinZ (1:1:1:xs)) (BinZ (1:1:ys)) = BinZ (0:0:0:xs) + BinZ (0:0:ys)
   (+) (BinZ (1:1:xs)) (BinZ (1:1:1:ys)) = BinZ (0:0:xs) + BinZ (0:0:0:ys)
   (+) (BinZ (1:xs)) (BinZ (1:ys)) = BinZ [0,0,1,1] + BinZ (0:xs) + BinZ (0:ys)
-  (*) a b = 
-  --(-) (BinZ a) (BinZ b) = 
-  --negate = 
-  abs _ = BinZ [0]
-  signum _ = BinZ [0]
-  fromInteger a = BinZ [0]
+  (*) (BinZ xs) (BinZ ys) = sum $ zipWith (\a b -> if b == 1 then BinZ (a++xs) else BinZ [0]) [replicate a 0|a<-[0..]] ys
+  fromInteger a = toBinZ (fromInteger a :: Cpx)
+  abs a = toBinZ $ abs $ fromBinZ a
 
 zs = Cpx (1,0):map (* Cpx (-1,1)) zs
 
@@ -38,6 +35,15 @@ scale s (Cpx (a, b)) = Cpx (s*a, s*b)
 fromBinZ (BinZ n) = sum $ zipWith scale n zs
 
 toBinZ (Cpx (0, 0)) = BinZ [0]
-toBinZ (Cpx (a, 0)) = toBinZ (Cpx (a-1,0)) + BinZ [1]
+toBinZ (Cpx (a, 0))
+  | a>=0 = toBinZ (Cpx (a-1,0)) + BinZ [1]
+  | otherwise = toBinZ (Cpx (a+1,0)) + BinZ [1,0,1,1,1] 
 toBinZ (Cpx (0, b)) = BinZ [1,1] * toBinZ (Cpx (b, 0))
 toBinZ (Cpx (a, b)) = toBinZ (Cpx (a, 0)) + toBinZ (Cpx (0, b))
+
+--binarily a [] = a
+--binarily a (b:bs) = binarily (a ++ map (b+) a) bs
+
+cpxSpan n = map fromInteger [-n..n-1]::[Cpx]
+
+cpxField n m = map (\x -> map (+(x*(Cpx (0,1)))) (cpxSpan n)) (cpxSpan m)
