@@ -11,16 +11,20 @@ instance Num Cpx where
 
 
 data BinZ = BinZ [Int] deriving (Show, Eq)
+--data Bit = O|I
+--data Binz = Single Bit|Bit :> Binz
+
 
 getList (BinZ x) = x
 
 instance Num BinZ where
+--remember that BinZ [0,0,1,1] = 1100_z
   (+) (BinZ []) a = a
   (+) a (BinZ []) = a
   (+) (BinZ (x:xs)) (BinZ (0:ys)) = BinZ (x:getList (BinZ xs + BinZ ys))
   (+) (BinZ (0:xs)) (BinZ (x:ys)) = BinZ (x:getList (BinZ xs + BinZ ys))
-  (+) (BinZ (1:1:1:xs)) (BinZ (1:1:ys)) = BinZ (0:0:0:xs) + BinZ (0:0:ys)
-  (+) (BinZ (1:1:xs)) (BinZ (1:1:1:ys)) = BinZ (0:0:xs) + BinZ (0:0:0:ys)
+  (+) (BinZ (1:1:1:xs)) (BinZ (1:1:ys)) = BinZ (0:0:getList (BinZ (0:xs) + BinZ ys))
+  (+) (BinZ (1:1:xs)) (BinZ (1:1:1:ys)) = BinZ (0:0:getList (BinZ xs + BinZ (0:ys)))
   (+) (BinZ (1:xs)) (BinZ (1:ys)) = BinZ [0,0,1,1] + BinZ (0:xs) + BinZ (0:ys)
   (*) (BinZ xs) (BinZ ys) = sum $ zipWith (\a b -> if b == 1 then BinZ (a++xs) else BinZ [0]) [replicate a 0|a<-[0..]] ys
   fromInteger a = toBinZ (fromInteger a :: Cpx)
@@ -29,8 +33,6 @@ instance Num BinZ where
 zs = Cpx (1,0):map (* Cpx (-1,1)) zs
 
 scale s (Cpx (a, b)) = Cpx (s*a, s*b)
-
---remember that BinZ [0,0,1,1] = 1100_z
 
 fromBinZ (BinZ n) = sum $ zipWith scale n zs
 
@@ -46,4 +48,4 @@ toBinZ (Cpx (a, b)) = toBinZ (Cpx (a, 0)) + toBinZ (Cpx (0, b))
 
 cpxSpan n = map fromInteger [-n..n-1]::[Cpx]
 
-cpxField n m = map (\x -> map (+(x*(Cpx (0,1)))) (cpxSpan n)) (cpxSpan m)
+cpxField n m = map (\x -> map (+(x*Cpx (0,1))) (cpxSpan n)) (cpxSpan m)
