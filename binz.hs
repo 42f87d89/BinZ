@@ -9,11 +9,7 @@ instance Num Cpx where
   signum _ = 0
   fromInteger a = Cpx (fromInteger a, 0)
 
-
 data BinZ = BinZ [Int] deriving (Show, Eq)
---data Bit = O|I
---data Binz = Single Bit|Bit :> Binz
-
 
 getList (BinZ x) = x
 
@@ -43,9 +39,18 @@ toBinZ (Cpx (a, 0))
 toBinZ (Cpx (0, b)) = BinZ [1,1] * toBinZ (Cpx (b, 0))
 toBinZ (Cpx (a, b)) = toBinZ (Cpx (a, 0)) + toBinZ (Cpx (0, b))
 
---binarily a [] = a
---binarily a (b:bs) = binarily (a ++ map (b+) a) bs
+insigZero (0:list) = insigZero list
+insigZero list = list
+
+lengthBinZ (BinZ list) = length $ insigZero $ reverse list
 
 cpxSpan n = map fromInteger [-n..n-1]::[Cpx]
 
 cpxField n m = map (\x -> map (+(x*Cpx (0,1))) (cpxSpan n)) (cpxSpan m)
+
+binary ls = sum$zipWith (*) ls (iterate (*2) 1)
+
+zField n m = (map.map) (\x->binary$getList$toBinZ x) $ cpxField n m
+
+main = do
+  putStr$ unlines $ map unwords $(map.map) show $ zField 800 450
